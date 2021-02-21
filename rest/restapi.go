@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -34,18 +37,28 @@ func getBook(w http.ResponseWriter, r *http.Request){
     w.Header().Set("Content-Type", "application/json")
     params := mux.Vars(r)
 
-    //find book
+    //find book sent in list of books by comparing ID, return whole book on finding
     for _, item := range books {
         if item.ID == params["id"]{
+            fmt.Println(item)
             json.NewEncoder(w).Encode(item)
             return
         }
     }
+
+    //if no book found return empty book JSON
     json.NewEncoder(w).Encode(&Book{})
 }
 
 func createBook(w http.ResponseWriter, r *http.Request){
+    w.Header().Set("Content-Type", "application/json")
+    var book Book
 
+    //data sent is in request body, bust be decoded (parsed)
+    _ = json.NewDecoder(r.Body).Decode(&book)
+    book.ID = strconv.Itoa(rand.Intn(10000000))
+    books = append(books, book)
+    json.NewEncoder(w).Encode(book)
 }
 
 func updateBook(w http.ResponseWriter, r *http.Request){
@@ -62,7 +75,7 @@ func main() {
     //init router
     router := mux.NewRouter()
 
-    //Mock data
+    //Mock data, Author is another struct inside Book struct
     books = append(books, Book{ID: "1", Isbn: "438227", Title: "Book One", Author: &Author{Firstname: "John", Lastname: "Doe"}})
 	books = append(books, Book{ID: "2", Isbn: "454555", Title: "Book Two", Author: &Author{Firstname: "Steve", Lastname: "Smith"}})
 
